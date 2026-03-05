@@ -66,6 +66,9 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	if req.Email != nil {
 		updateFields["email"] = *req.Email
 	}
+	if req.Username != nil {
+		updateFields["username"] = *req.Username
+	}
 	if req.DefaultSalary != nil {
 		updateFields["default_salary"] = *req.DefaultSalary
 	}

@@ -36,7 +36,7 @@ func (h *Handler) GetMonthlySummary(c *gin.Context) {
 		return
 	}
 
-	// Get monthly record
+	// Get monthly record, if any
 	var record models.MonthlyRecord
 	filter := bson.M{
 		"user_id": userID,
@@ -45,55 +45,101 @@ func (h *Handler) GetMonthlySummary(c *gin.Context) {
 	}
 
 	err = h.db.Collection("monthly_records").FindOne(context.Background(), filter).Decode(&record)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			// No record exists, return default values
-			var user models.User
-			err := h.db.Collection("users").FindOne(
-				context.Background(),
-				bson.M{"_id": userID},
-			).Decode(&user)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to get user"})
-				return
-			}
-
-			c.JSON(http.StatusOK, models.MonthlySummaryResponse{
-				Salary:           user.DefaultSalary,
-				TotalCommitment:  0,
-				RemainingBalance: user.DefaultSalary,
-				Commitments:      []models.CommitmentSummary{},
-			})
-			return
-		}
+	if err != nil && err != mongo.ErrNoDocuments {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to get monthly record"})
 		return
 	}
 
-	// Build commitment summaries
-	commitmentSummaries := make([]models.CommitmentSummary, len(record.Commitments))
-	for i, commitment := range record.Commitments {
-		amount := commitment.Value
-		if commitment.Type == models.CommitmentTypePercentage {
-			amount = (commitment.Value / 100) * record.Salary
+	// fetch default commitments if exist
+	var def models.DefaultCommitment
+	err = h.db.Collection("default_commitments").FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&def)
+	if err != nil && err != mongo.ErrNoDocuments {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to fetch default commitments"})
+		return
+	}
+
+	// if no record and no default, fallback to default salary only
+	if err == mongo.ErrNoDocuments && len(def.Commitments) == 0 {
+		var user models.User
+		err := h.db.Collection("users").FindOne(
+			context.Background(),
+			bson.M{"_id": userID},
+		).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to get user"})
+			return
 		}
 
-		commitmentSummaries[i] = models.CommitmentSummary{
-			ID:     commitment.ID.Hex(),
-			Name:   commitment.Name,
+		c.JSON(http.StatusOK, models.MonthlySummaryResponse{
+			Salary:                   user.DefaultSalary,
+			TotalPaidCommitment:      0,
+			TotalRemainingCommitment: user.DefaultSalary,
+			PaidCommitments:          []models.CommitmentSummary{},
+			UnpaidCommitments:        []models.CommitmentSummary{},
+		})
+		return
+	}
+
+	// combine commitments: defaults first, then override with record entries
+	combined := make(map[string]models.Commitment)
+	for _, cmt := range def.Commitments {
+		combined[cmt.ID.Hex()] = cmt
+	}
+	for _, cmt := range record.Commitments {
+		combined[cmt.ID.Hex()] = cmt
+	}
+
+	// determine salary to report (default to user salary if record is empty)
+	salaryToReport := record.Salary
+	if salaryToReport == 0 {
+		var user models.User
+		err := h.db.Collection("users").FindOne(
+			context.Background(),
+			bson.M{"_id": userID},
+		).Decode(&user)
+		if err == nil {
+			salaryToReport = user.DefaultSalary
+		}
+	}
+
+	paidList := []models.CommitmentSummary{}
+	unpaidList := []models.CommitmentSummary{}
+	totalPaid := 0.0
+	totalOverall := 0.0
+	for _, cmt := range combined {
+		amount := cmt.Value
+		if cmt.Type == models.CommitmentTypePercentage {
+			amount = (cmt.Value / 100) * salaryToReport
+		}
+		totalOverall += amount
+		item := models.CommitmentSummary{
+			ID:     cmt.ID.Hex(),
+			Name:   cmt.Name,
 			Amount: amount,
-			IsPaid: commitment.IsPaid,
+			IsPaid: cmt.IsPaid,
+		}
+		if cmt.IsPaid {
+			paidList = append(paidList, item)
+			totalPaid += amount
+		} else {
+			unpaidList = append(unpaidList, item)
 		}
 	}
 
-	response := models.MonthlySummaryResponse{
-		Salary:           record.Salary,
-		TotalCommitment:  record.TotalCommitment,
-		RemainingBalance: record.RemainingBalance,
-		Commitments:      commitmentSummaries,
+	totalRemaining := salaryToReport - totalPaid
+
+	resp := models.MonthlySummaryResponse{
+		Salary:                       salaryToReport,
+		TotalPaidCommitment:          totalPaid,
+		TotalRemainingCommitment:     totalRemaining,
+		SalaryMinusPaidCommitment:    salaryToReport - totalPaid,
+		TotalOverallCommitment:       totalOverall,
+		SalaryMinusOverallCommitment: salaryToReport - totalOverall,
+		PaidCommitments:              paidList,
+		UnpaidCommitments:            unpaidList,
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, resp)
 }
 
 // GetYearlySummary returns yearly summary

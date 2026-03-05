@@ -78,31 +78,21 @@ func (h *Handler) SetMonthlySalary(c *gin.Context) {
 		return
 	}
 
-	// Find or create monthly record
+	// Ensure the monthly record exists (copying defaults if necessary)
+	// ensure record exists (defaults are merged internally)
+	if _, err = getOrCreateMonthlyRecord(h.db, userID, year, month); err != nil {
+		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to get monthly record"})
+		return
+	}
+
+	// Update salary on the record
 	filter := bson.M{
 		"user_id": userID,
 		"year":    year,
 		"month":   month,
 	}
-
-	var record models.MonthlyRecord
-	err = h.db.Collection("monthly_records").FindOne(context.Background(), filter).Decode(&record)
-
-	if err == mongo.ErrNoDocuments {
-		// Create new record
-		record = models.MonthlyRecord{
-			UserID:      userID,
-			Year:        year,
-			Month:       month,
-			Salary:      req.Salary,
-			Commitments: []models.Commitment{},
-		}
-		_, err = h.db.Collection("monthly_records").InsertOne(context.Background(), record)
-	} else if err == nil {
-		// Update existing record
-		update := bson.M{"$set": bson.M{"salary": req.Salary}}
-		_, err = h.db.Collection("monthly_records").UpdateOne(context.Background(), filter, update)
-	}
+	update := bson.M{"$set": bson.M{"salary": req.Salary}}
+	_, err = h.db.Collection("monthly_records").UpdateOne(context.Background(), filter, update)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.ErrorResponse{Error: "failed to update monthly salary"})

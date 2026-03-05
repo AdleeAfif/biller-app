@@ -40,12 +40,19 @@ type CommitmentPaidRequest struct {
 	IsPaid bool `json:"is_paid"`
 }
 
-// MonthlySummaryResponse represents monthly summary response
+// MonthlySummaryResponse represents monthly summary response. It now
+// includes totals for paid vs remaining commitments and separates the
+// commitment list into paid/unpaid, merging defaults and month-specific
+// entries.
 type MonthlySummaryResponse struct {
-	Salary           float64                  `json:"salary"`
-	TotalCommitment  float64                  `json:"total_commitment"`
-	RemainingBalance float64                  `json:"remaining_balance"`
-	Commitments      []CommitmentSummary      `json:"commitments"`
+	Salary                       float64             `json:"salary"`
+	TotalPaidCommitment          float64             `json:"total_paid_commitment"`
+	TotalRemainingCommitment     float64             `json:"total_remaining_commitment"`
+	SalaryMinusPaidCommitment    float64             `json:"salary_minus_paid_commitment"`
+	TotalOverallCommitment       float64             `json:"total_overall_commitment"`
+	SalaryMinusOverallCommitment float64             `json:"salary_minus_overall_commitment"`
+	PaidCommitments              []CommitmentSummary `json:"paid_commitments"`
+	UnpaidCommitments            []CommitmentSummary `json:"unpaid_commitments"`
 }
 
 // CommitmentSummary represents commitment in summary
@@ -72,8 +79,10 @@ type YearlySummaryResponse struct {
 }
 
 // UpdateUserRequest represents admin user update request
+// (allows changing email, username, salary)
 type UpdateUserRequest struct {
 	Email         *string  `json:"email,omitempty" binding:"omitempty,email"`
+	Username      *string  `json:"username,omitempty" binding:"omitempty,min=3"`
 	DefaultSalary *float64 `json:"default_salary,omitempty" binding:"omitempty,gt=0"`
 }
 

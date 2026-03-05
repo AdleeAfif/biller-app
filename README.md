@@ -64,17 +64,17 @@ See [QUICKSTART.md](QUICKSTART.md) for detailed setup instructions.
 ### User Profile & Salary
 
 - `PUT /api/users/me/salary/default` - Set default monthly salary
-- `PUT /api/users/me/salary/:year/:month` - Update salary for specific month
+- `PUT /api/users/me/salary/:year/:month` - Update salary for specific month (creates record if needed; default commitments are copied into the new month)
 
 ### Commitments
 
 - `POST /api/users/me/commitments/default` - Set default monthly commitments
-- `POST /api/users/me/commitments/:year/:month` - Set commitments for specific month
-- `PATCH /api/users/me/commitments/:year/:month/:commitment_id` - Update commitment paid status
+- `POST /api/users/me/commitments/:year/:month` - Set commitments for specific month (appends to any existing commitments for that month; default entries are merged when the record is first created)
+- `PATCH /api/users/me/commitments/:year/:month/:commitment_id` - Update commitment paid status (creates the monthly record with defaults if needed)
 
 ### Summaries
 
-- `GET /api/users/me/summary/monthly/:year/:month` - Get monthly summary
+- `GET /api/users/me/summary/monthly/:year/:month` - Get monthly summary (includes paid vs remaining commitment totals and separate lists of paid/unpaid items, merging default and monthly entries)
 - `GET /api/users/me/summary/yearly/:year` - Get yearly summary
 
 ### Admin (requires admin role)

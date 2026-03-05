@@ -59,7 +59,9 @@ func main() {
 
 			// Commitments
 			protected.POST("/commitments/default", commitmentHandler.SetDefaultCommitments)
+			protected.GET("/commitments/default", commitmentHandler.GetDefaultCommitments)
 			protected.POST("/commitments/:year/:month", commitmentHandler.SetMonthlyCommitments)
+			protected.GET("/commitments/:year/:month", commitmentHandler.GetMonthlyCommitments)
 			protected.PATCH("/commitments/:year/:month/:commitment_id", commitmentHandler.UpdateCommitmentPaidStatus)
 
 			// Summaries

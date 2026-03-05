@@ -45,24 +45,24 @@ type Commitment struct {
 
 // MonthlyRecord represents a user's monthly financial record
 type MonthlyRecord struct {
-	ID                primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	UserID            primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Year              int                `json:"year" bson:"year"`
-	Month             int                `json:"month" bson:"month"`
-	Salary            float64            `json:"salary" bson:"salary"`
-	Commitments       []Commitment       `json:"commitments" bson:"commitments"`
-	TotalCommitment   float64            `json:"total_commitment" bson:"total_commitment"`
-	RemainingBalance  float64            `json:"remaining_balance" bson:"remaining_balance"`
+	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	UserID           primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Year             int                `json:"year" bson:"year"`
+	Month            int                `json:"month" bson:"month"`
+	Salary           float64            `json:"salary" bson:"salary"`
+	Commitments      []Commitment       `json:"commitments" bson:"commitments"`
+	TotalCommitment  float64            `json:"total_commitment" bson:"total_commitment"`
+	RemainingBalance float64            `json:"remaining_balance" bson:"remaining_balance"`
 }
 
 // YearlySummary represents a user's yearly summary
 type YearlySummary struct {
-	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	UserID           primitive.ObjectID `json:"user_id" bson:"user_id"`
-	Year             int                `json:"year" bson:"year"`
-	TotalSalary      float64            `json:"total_salary" bson:"total_salary"`
-	TotalCommitment  float64            `json:"total_commitment" bson:"total_commitment"`
-	TotalRemaining   float64            `json:"total_remaining" bson:"total_remaining"`
+	ID              primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	UserID          primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Year            int                `json:"year" bson:"year"`
+	TotalSalary     float64            `json:"total_salary" bson:"total_salary"`
+	TotalCommitment float64            `json:"total_commitment" bson:"total_commitment"`
+	TotalRemaining  float64            `json:"total_remaining" bson:"total_remaining"`
 }
 
 // DefaultCommitment represents a user's default monthly commitments

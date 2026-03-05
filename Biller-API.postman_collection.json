@@ -107,6 +107,7 @@
         {
           "name": "Set Monthly Salary",
           "request": {
+            "description": "Creates or updates the month record; when creating it will pull in default commitments.",
             "method": "PUT",
             "header": [
               {
@@ -160,8 +161,43 @@
           }
         },
         {
+          "name": "Get Default Commitments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me/commitments/default",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "me", "commitments", "default"]
+            }
+          }
+        },
+        {
+          "name": "Get Monthly Commitments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me/commitments/2026/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "me", "commitments", "2026", "1"]
+            }
+          }
+        },
+        {
           "name": "Set Monthly Commitments",
           "request": {
+            "description": "Appends the supplied commitments to the user's monthly record (defaults are copied when the record is first created).",
             "method": "POST",
             "header": [
               {
